@@ -9,10 +9,13 @@
 void setup(){
     Serial.begin(115200);
     imuSetup();
+    driveSetup();
+    potsSetup();
 }
 
 void loop(){
-    EulerAngles angle = readIMU();
-    printEuler(angle);
+    readPots();
+    drive(potReadings[0]/1023.0, potReadings[1]/1023.0);
+    Serial.printf("Pot: %d\n", potReadings[0]);
     delay(100);
 }
