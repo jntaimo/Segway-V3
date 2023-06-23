@@ -134,6 +134,10 @@ void setup(void) {
 
   Serial.println(F("Initialized"));
 
+}
+
+void loop() {
+
   uint16_t time = millis();
   tft.fillScreen(ST77XX_BLACK);
   time = millis() - time;
@@ -184,12 +188,11 @@ void setup(void) {
 
   Serial.println("done");
   delay(1000);
-}
-
-void loop() {
   tft.invertDisplay(true);
   delay(500);
   tft.invertDisplay(false);
+  delay(500);
+  tft.invertDisplay(true);
   delay(500);
 }
 

@@ -59,10 +59,13 @@ void setReports(void) {
   }
 }
 
+//time how long between subsequent readings
+unsigned long lastReadMicros = 0;
+unsigned long currentReadMicros = 0;
 
 void loop() {
   delay(3);
-
+  
   if (bno08x.wasReset()) {
     Serial.print("sensor was reset ");
     setReports();
