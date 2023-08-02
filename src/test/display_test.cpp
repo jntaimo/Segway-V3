@@ -36,7 +36,9 @@
 #include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 #include <SPI.h>
+#include <UMS3.h>
 
+UMS3 ums3;
 // #if defined(ARDUINO_FEATHER_ESP32) // Feather Huzzah32
 //   #define TFT_CS         14
 //   #define TFT_RST        15
@@ -95,6 +97,9 @@ void mediabuttons();
 
 void setup(void) {
   Serial.begin(115200);
+  ums3.begin();
+  ums3.setLDO2Power(true);
+
   Serial.print(F("Hello! ST77xx TFT Test"));
 
   // Use this initializer if using a 1.8" TFT screen:

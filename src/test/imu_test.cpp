@@ -1,4 +1,7 @@
 #include <Arduino.h>
+#include <UMS3.h>
+
+UMS3 ums3;
 // Basic demo for readings from Adafruit BNO08x
 #include <Adafruit_BNO08x.h>
 
@@ -17,6 +20,8 @@ void setReports(void);
 
 void setup(void) {
   Serial.begin(115200);
+  ums3.begin();
+  ums3.setLDO2Power(true);
   while (!Serial) delay(10);     // will pause Zero, Leonardo, etc until serial console opens
 
   Serial.println("Adafruit BNO08x test!");
