@@ -7,9 +7,11 @@
 #define POT_4_PIN 5
 
 #define NUM_POTS 4
+#define POT_THRESHOLD 10
 const uint8_t potPins[] = {POT_1_PIN, POT_2_PIN, POT_3_PIN, POT_4_PIN};
 
 uint16_t potReadings[4];
+
 void potsSetup(){
     analogReadResolution(10);
     //configure the potentiometers as inputs
@@ -18,11 +20,18 @@ void potsSetup(){
     }
 }
 
-
-void readPots(){
+//reads all of the potentiometers and updates the potReadings array
+//returns true if any of the potentiometers have changed by more than POT_THRESHOLD
+bool readPots(){
+    bool newReading = false;
     for (int i = 0; i<NUM_POTS; i++){
-    potReadings[i] = analogRead(potPins[i]);
+    uint16_t newPotReading = analogRead(potPins[i]);
+    if (abs(newPotReading - potReadings[i]) > POT_THRESHOLD ){
+        potReadings[i] = analogRead(potPins[i]);
+        newReading = true;
     }   
+    }   
+    return newReading;
 }
 
 void printPots(){

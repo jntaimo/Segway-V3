@@ -2,13 +2,14 @@
 #include "display.h"
 #include "drive.h"
 #include "imu.h"
-#include "mic.h"
 #include "pid.h"
 #include "pots.h"
 #include <UMS3.h>
-PID pid(1, 1, 1, 0);
+
 #define MOTOR_EN 38
 UMS3 ums3;
+
+float desiredAngle = 0;
 
 void setup(){
     pinMode(MOTOR_EN, INPUT_PULLUP);

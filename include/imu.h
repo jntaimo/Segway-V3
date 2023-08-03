@@ -1,3 +1,5 @@
+#ifndef IMU_H
+#define IMU_H
 struct Quaternion {
     double w, x, y, z;
 };
@@ -13,3 +15,4 @@ EulerAngles readIMU();
 void setReports(void);
 void printEuler(EulerAngles angles);
 EulerAngles ToEulerAngles(Quaternion q);
+#endif // IMU_H

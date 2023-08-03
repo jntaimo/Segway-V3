@@ -10,10 +10,10 @@
 //increase frequency of pwm so it can't be heard
 #define PWM_FREQ 25000
 //max number of bits for pwm
-#define PWM_BITS 10
+#define PWM_BITS 11
 #define MAX_PWM (pow(2, PWM_BITS)-1)
-#define L_CHANNEL 0
-#define R_CHANNEL 1
+#define PWM1_CHANNEL 0
+#define PWM2_CHANNEL 1
 
 float batteryVoltage = 12;
 
@@ -25,22 +25,12 @@ void driveSetup(){
     pinMode(PWM2, OUTPUT);
 
     //configure pwm channels
-    ledcSetup(L_CHANNEL, PWM_FREQ, PWM_BITS);
-    ledcSetup(R_CHANNEL, PWM_FREQ, PWM_BITS);
+    ledcSetup(0, PWM_FREQ, PWM_BITS);
+    ledcSetup(1, PWM_FREQ, PWM_BITS);
 
     //assign pwm pins to channels
-    ledcAttachPin(DIR1, 0);
-    ledcAttachPin(DIR2, 1);
-    
-    //put pwm at middle value to turn off motors
-    ledcWrite(L_CHANNEL, MAX_PWM/2);
-    ledcWrite(R_CHANNEL, MAX_PWM/2);
-
-    //force motor driver into two wire mode
-    digitalWrite(PWM1, HIGH);
-    digitalWrite(PWM2, HIGH);
-    
-
+    ledcAttachPin(PWM1, 0);
+    ledcAttachPin(PWM2, 1);
 }
 
 //drives the motors with units in volts
@@ -54,9 +44,11 @@ void drive(double left, double right){
     //limit drive pwm 
     left = constrain(left, -1, 1);
     right = constrain(right, -1, 1);
+    //pick direction
+    digitalWrite(DIR1, left > 0);
+    digitalWrite(DIR2, right > 0);
 
     //output pwm
-    //centered around half of max pwm
-    ledcWrite(L_CHANNEL, left*MAX_PWM/2 + MAX_PWM/2);
-    ledcWrite(R_CHANNEL, right*MAX_PWM/2 + MAX_PWM/2);
+    ledcWrite(PWM1_CHANNEL, abs(left)*MAX_PWM);
+    ledcWrite(PWM2_CHANNEL, abs(right)*MAX_PWM);
 }
