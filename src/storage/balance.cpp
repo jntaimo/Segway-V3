@@ -6,6 +6,7 @@
 #include "imu.h"
 #include "pid.h"
 #include "pots.h"
+#include "util.h"
 #include <UMS3.h>
 
 #define MOTOR_EN 38
@@ -28,23 +29,26 @@ UMS3 ums3;
 #define MIN_KD 0.0
 #define MAX_KD 10.0
 
-//radi
 #define MIN_TRIM -1.0
 #define MAX_TRIM 1.0
+
+#define PRINT_DELAY 30 // Delay between printing to serial in milliseconds
+static unsigned long lastPrintTime = 0;
 
 double balanceKp = 1.0; 
 double balanceKi = 0.1;
 double balanceKd = 0.01;
 double balanceTrim = 0.0;
+double balanceTau = 0.01;
 
 double motorKp = 1.0;
 double motorKi = 0.1;
 double motorKd = 0;
 
 // PID controllers
-PID balancePID(1.0, 0.1, 0.01, 0.0, 0.0, true);  // Adjust these parameters
-PID leftMotorPID(1.0, 0.1, 0.01, 0.0, 0.0, true); // Adjust these parameters
-PID rightMotorPID(1.0, 0.1, 0.01, 0.0, 0.0, true); // Adjust these parameters
+PID balancePID(balanceKp, balanceKi, balanceKd, balanceTau, 0.0, false);  
+PID leftMotorPID(motorKp, motorKi, motorKd, 0.0, 0.0, false); 
+PID rightMotorPID(motorKp, motorKi, motorKd, 0.0, 0.0, false); 
 
 // Encoder velocity readers
 EncoderVelocity leftEncoder(LEFT_ENCODER_A_PIN, LEFT_ENCODER_B_PIN, COUNTS_PER_REVOLUTION);
@@ -52,31 +56,20 @@ EncoderVelocity rightEncoder(RIGHT_ENCODER_A_PIN, RIGHT_ENCODER_B_PIN, COUNTS_PE
 
 EulerAngles imuAngles; // IMU angles
 
-double logMap(double x, double in_min, double in_max, double out_min, double out_max);
+
 //updates the PID parameters based on the potentiometer readings
 //returns true if the PID parameters have changed
-bool updatePIDParams(){
+//take in desired PID parameters which are changed by the function
+bool updatePIDParams(double &kp, double &ki, double &kd, double &trim){
     //check the potentiometer readings
     bool newReading = readPots();
     if (newReading) {
-        balanceKp = logMap(potReadings[0], 0, 1023, MIN_KP, MAX_KP);
-        balanceKi = logMap(potReadings[1], 0, 1023, MIN_KI, MAX_KI);
-        balanceKd = logMap(potReadings[2], 0, 1023, MIN_KD, MAX_KD);
-        //map the potentiometer reading to a value between MIN_KP and MAX_KP logarithmically
-        
+        kp = logMap(potReadings[0], 0, 1023, MIN_KP, MAX_KP);
+        ki = logMap(potReadings[1], 0, 1023, MIN_KI, MAX_KI);
+        kd = logMap(potReadings[2], 0, 1023, MIN_KD, MAX_KD);
+        balanceTrim = logMap(potReadings[3], 0, 1023, MIN_TRIM, MAX_TRIM);
     }
-}
-
-//map from an input to output range logarithmically
-double logMap(double x, double in_min, double in_max, double out_min, double out_max) {
-  if (x <= in_min) return out_min;
-  if (x >= in_max) return out_max;
-
-  // Normalize the input value to the [0, 1] range
-  double normalized = (log(x) - log(in_min)) / (log(in_max) - log(in_min));
-
-  // Map the normalized value to the output range
-  return normalized * (out_max - out_min) + out_min;
+    return newReading;
 }
 
 void setup() {
@@ -92,7 +85,7 @@ void setup() {
 
 void loop() {
     // Read the pots
-    readPots();
+  readPots();
   // Desired values
   float desiredTiltAngle = 0; // Implement this function based on your requirements
   float desiredCurvature = 0; // Implement this function based on your requirements
@@ -100,10 +93,17 @@ void loop() {
 
   // Read the current angle from IMU
   imuAngles = readIMU();
+  //only update PID if the IMU was read successfully
+  if (!imuAngles.success){
+    //if the IMU was not read successfully, print an error message and return
+    Serial.println("IMU read failed");
+    return;
+  }
+  //IMU must have been read successfully
   float currentTiltAngle = imuAngles.roll;
 
   // Balancing control
-  float balanceControl = balancePID.calculateSerial(desiredTiltAngle, currentTiltAngle);
+  float balanceControl = balancePID.calculateParallel(desiredTiltAngle, currentTiltAngle);
 
   // Desired wheel speeds combining balance control, forward velocity, and curvature
   float leftDesiredSpeed = desiredForwardVelocity - WHEEL_SEPARATION * desiredCurvature * desiredForwardVelocity / 2 - balanceControl;
@@ -114,8 +114,8 @@ void loop() {
   float rightCurrentSpeed = rightEncoder.getVelocity();
 
   // Calculate motor control signals using PID controllers
-  float leftMotorControl = leftMotorPID.calculateSerial(leftDesiredSpeed, leftCurrentSpeed);
-  float rightMotorControl = rightMotorPID.calculateSerial(rightDesiredSpeed, rightCurrentSpeed);
+  float leftMotorControl = leftMotorPID.calculateParallel(leftDesiredSpeed, leftCurrentSpeed);
+  float rightMotorControl = rightMotorPID.calculateParallel(rightDesiredSpeed, rightCurrentSpeed);
 
   // Set motor speeds
   if (!digitalRead(MOTOR_EN)){
@@ -125,7 +125,30 @@ void loop() {
     drive(0,0);
   }
   
-
+  // Print to serial
+  
+  if (millis() - lastPrintTime > PRINT_DELAY) {
+    Serial.print("Desired tilt angle: ");
+    Serial.print(desiredTiltAngle);
+    Serial.print(" Current tilt angle: ");
+    Serial.print(currentTiltAngle);
+    Serial.print(" Balance control: ");
+    Serial.print(balanceControl);
+    Serial.print(" Left desired speed: ");
+    Serial.print(leftDesiredSpeed);
+    Serial.print(" Right desired speed: ");
+    Serial.print(rightDesiredSpeed);
+    Serial.print(" Left current speed: ");
+    Serial.print(leftCurrentSpeed);
+    Serial.print(" Right current speed: ");
+    Serial.print(rightCurrentSpeed);
+    Serial.print(" Left motor control: ");
+    Serial.print(leftMotorControl);
+    Serial.print(" Right motor control: ");
+    Serial.println(rightMotorControl);
+    lastPrintTime = millis();
+  }
+  
   // Delay to avoid overloading the microcontroller
   delay(1);
 }

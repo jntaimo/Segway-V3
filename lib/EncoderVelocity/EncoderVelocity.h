@@ -2,12 +2,12 @@
 #define EncoderVelocity_h
 
 #include <Arduino.h>
-#include <Encoder.h>
+#include <ESP32Encoder.h>
 
 class EncoderVelocity {
 public:
   // Constructor: Initializes with the given pins and counts per revolution (CPR)
-  EncoderVelocity(int pinA, int pinB, int countsPerRevolution);
+  EncoderVelocity(int pinA, int pinB, int countsPerRevolution, float tau = 0.01, float minimumVelocity = 0.01);
 
   // Returns the current velocity in radians per second
   float getVelocity();
@@ -19,11 +19,17 @@ public:
   void resetPosition();
 
 private:
-  Encoder _encoder;         // Encoder object for reading the encoder
+  ESP32Encoder _encoder;         // Encoder object for reading the encoder
   long _lastPosition;       // Last recorded encoder position (in counts)
-  unsigned long _lastTime;  // Time of the last encoder change (in microseconds)
+  unsigned long _lastChange;  // Time of the last encoder change (in microseconds)
+  unsigned long _lastCheck;  // Time of the last velocity calculation (in microseconds)
+  unsigned long _timeout;    // Timeout for velocity calculation (in microseconds)
+  float _tau;               // Time constant for velocity filter (in seconds)
+  float _filteredVelocity;  // Filtered velocity (in radians per second)
   float _velocity;          // Estimated velocity (in radians per second)
   float _countsToRadians;   // Conversion factor from counts to radians
+  float _minimumVelocity;   // Minimum velocity to be considered moving (in radians per second)
+  
 };
 
 #endif

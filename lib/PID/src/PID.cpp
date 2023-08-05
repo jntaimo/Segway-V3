@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "PID.h"
 
-
+  // Constructor: Initializes the PID controller with the given parameters
   PID::PID(double Kp, double Ki, double Kd, double setpoint, double tau, bool serial)
     : _setpoint(setpoint), _previousError(0), _integral(0), _lastDerivative(0), _alpha(1), _integralMin(0), _integralMax(0), _tau(tau) {
       if (serial) {
@@ -76,11 +76,11 @@
     double error = _setpoint - input;               // Calculate error
     _integral += (1.0 / _Ki) * error * dt;          // Integral term
     _integral = constrain(_integral, _integralMin, _integralMax); // Prevent integral windup
-
+  
     double derivative = ((_integral + error) - _previousError) / dt; // Derivative term
     derivative = _alpha * _lastDerivative + (1 - _alpha) * derivative; // Apply low-pass filter
     _lastDerivative = derivative;
-
+    
     double output = _Kp * (error + _integral) * _Kd * derivative; // Calculate serial PID output
     _previousError = _integral + error;
 

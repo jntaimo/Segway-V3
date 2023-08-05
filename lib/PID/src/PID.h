@@ -3,6 +3,7 @@
 
 class PID {
 public:
+  // Constructor: Initializes with the given gains/time constants
   PID(double Kp, double Ki, double Kd, double setpoint, double tau, bool serial);
 
   // Set tuning parameters for parallel PID form
