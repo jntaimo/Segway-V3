@@ -7,7 +7,7 @@
 #define POT_4_PIN 5
 
 #define NUM_POTS 4
-#define POT_THRESHOLD 10
+#define POT_THRESHOLD 5
 const uint8_t potPins[] = {POT_1_PIN, POT_2_PIN, POT_3_PIN, POT_4_PIN};
 
 uint16_t potReadings[4];

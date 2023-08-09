@@ -29,6 +29,7 @@ private:
   float _velocity;          // Estimated velocity (in radians per second)
   float _countsToRadians;   // Conversion factor from counts to radians
   float _minimumVelocity;   // Minimum velocity to be considered moving (in radians per second)
+  bool _moving;             // Flag for whether the encoder is considered moving
   
 };
 

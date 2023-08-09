@@ -9,7 +9,7 @@
  * @param minimumVelocity Minimum velocity to be considered moving, specified in radians per second
  */
 EncoderVelocity::EncoderVelocity(int pinA, int pinB, int countsPerRevolution, float tau, float minimumVelocity)
-  : _lastPosition(0), _lastChange(0), _velocity(0), _lastCheck(0), _filteredVelocity(0), _tau(tau), _minimumVelocity(minimumVelocity),
+  : _moving(false), _lastPosition(0), _lastChange(0), _velocity(0), _lastCheck(0), _filteredVelocity(0), _tau(tau), _minimumVelocity(minimumVelocity),
     _countsToRadians(2 * PI / countsPerRevolution){
     ESP32Encoder::useInternalWeakPullResistors = UP;
   // _countsToRadians converts from encoder counts to radians
@@ -17,7 +17,7 @@ EncoderVelocity::EncoderVelocity(int pinA, int pinB, int countsPerRevolution, fl
     _encoder.setCount(0);
     _lastChange = micros();
     _lastCheck = micros();
-    _timeout = minimumVelocity/(_countsToRadians * 1000000);
+    _timeout = 10000;
 }
 
 // Calculates and returns the current velocity in radians per second
@@ -30,20 +30,26 @@ float EncoderVelocity::getVelocity() {
   unsigned long changeDt = (currentTime >= _lastChange) ? (currentTime - _lastChange) : (currentTime + (0xFFFFFFFF - _lastChange));
   //time since the velocity was last checked
   unsigned long checkDt = (currentTime >= _lastCheck) ? (currentTime - _lastCheck) : (currentTime + (0xFFFFFFFF - _lastCheck));
-  //if it's taken way too long to get a reading, reset the velocity to zero
-  if (changeDt > _timeout) {
-    _filteredVelocity = 0;
+  
+
+  
      // Check if the encoder position has changed and changeDt is not zero
-  } else if (currentPosition != _lastPosition && changeDt > 0) {
+  if (currentPosition != _lastPosition && changeDt > 0) {
     // Calculate the velocity as the change in position (in radians) divided by the change in time (in seconds)
     _velocity = (float)(currentPosition - _lastPosition) * _countsToRadians / changeDt * 1000000;
     // Update the last position and time
     _lastPosition = currentPosition;
     _lastChange = currentTime;
-  } 
+    _moving = true;
+    //if it's taken way too long to get a reading, reset the velocity to zero
+    //only reset if the encoder is moving
+  } else if (changeDt > _timeout && _moving) {
+    _filteredVelocity = 5;
+    _moving = false;
+  }
 
   // Calculate the filtered velocity using a first-order low-pass filter
-  float alpha = checkDt / (_tau * 1000000 + checkDt);
+  float alpha = (float)checkDt / (_tau * 1000000.0 + checkDt);
   _filteredVelocity = _filteredVelocity + alpha * (_velocity - _filteredVelocity);
 
   //update the last time the velocity was checked

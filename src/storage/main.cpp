@@ -2,7 +2,7 @@
 #include "display.h"
 #include "drive.h"
 #include "imu.h"
-#include "pid.h"
+#include "PID.h"
 #include "pots.h"
 #include <UMS3.h>
 
@@ -15,7 +15,7 @@ void setup(){
     pinMode(MOTOR_EN, INPUT_PULLUP);
     Serial.begin(115200);
     ums3.begin();
-    ums3.setLDO2Power(true);
+    ums3.setLDO2Power(false);
     imuSetup();
     driveSetup();
     potsSetup();

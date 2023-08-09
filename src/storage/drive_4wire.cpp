@@ -25,12 +25,12 @@ void driveSetup(){
     pinMode(PWM2, OUTPUT);
 
     //configure pwm channels
-    ledcSetup(0, PWM_FREQ, PWM_BITS);
-    ledcSetup(1, PWM_FREQ, PWM_BITS);
+    ledcSetup(PWM1_CHANNEL, PWM_FREQ, PWM_BITS);
+    ledcSetup(PWM2_CHANNEL, PWM_FREQ, PWM_BITS);
 
     //assign pwm pins to channels
-    ledcAttachPin(PWM1, 0);
-    ledcAttachPin(PWM2, 1);
+    ledcAttachPin(PWM1_CHANNEL, 0);
+    ledcAttachPin(PWM2_CHANNEL, 1);
 }
 
 //drives the motors with units in volts
