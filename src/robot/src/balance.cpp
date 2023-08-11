@@ -17,6 +17,7 @@ UMS3 ums3;
 #define RIGHT_ENCODER_A_PIN 13
 #define RIGHT_ENCODER_B_PIN 14
 #define COUNTS_PER_REVOLUTION 103.8
+
 #define WHEEL_SEPARATION 0.4 // Wheel separation in meters
 #define WHEEL_RADIUS 0.06 // Wheel radius in meters
 
@@ -24,10 +25,10 @@ UMS3 ums3;
 #define MAX_KP 100.0
 
 #define MIN_KI 0.0
-#define MAX_KI 500.0
+#define MAX_KI 1000.0
 
 #define MIN_KD 0.0
-#define MAX_KD 2.0
+#define MAX_KD 100.0
 
 #define MIN_TRIM -0.5
 #define MAX_TRIM 0.5
@@ -79,15 +80,18 @@ void setup() {
     pinMode(MOTOR_EN, INPUT_PULLUP);
     Serial.begin(115200);
     ums3.begin();
-    ums3.setLDO2Power(true);
+    ums3.setLDO2Power(false);
     imuSetup();
     driveSetup();
     potsSetup();  
     balancePID.setParallelTunings(balanceKp, balanceKi, balanceKd, balanceTau, -0.01, 0.01);
 }
 
+unsigned long lastLoopTime = 0;
+unsigned long loopDuration = 1;
 void loop() {
-
+  loopDuration = micros() - lastLoopTime;
+  lastLoopTime = micros();
   // Desired values
   float desiredTiltAngle = 0; 
   float desiredCurvature = 0; 
@@ -139,8 +143,8 @@ void loop() {
   if (millis() - lastPrintTime > PRINT_DELAY) {
     // Serial.print("Desired tilt angle: ");
     // Serial.print(desiredTiltAngle);
-    // Serial.print(" Current tilt angle: ");
-    // Serial.print(currentTiltAngle);
+    Serial.print(" Current tilt angle: ");
+    Serial.print(currentTiltAngle*180.0/PI);
     Serial.print(" Control Signal: ");
     Serial.print(balanceControl);
 
@@ -150,7 +154,9 @@ void loop() {
     Serial.print(" Ki: ");
     Serial.print(balanceKi);
     Serial.print(" Kd: ");
-    Serial.println(balanceKd);
+    Serial.print(balanceKd);
+    Serial.print("Loop Time: ");
+    Serial.println(loopDuration);
     // Serial.print(" Left desired speed: ");
     // Serial.print(leftDesiredSpeed);
     // Serial.print(" Right desired speed: ");
@@ -168,4 +174,5 @@ void loop() {
   
   // Delay to avoid overloading the microcontroller
   //delay(1);
+  
 }

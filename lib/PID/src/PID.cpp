@@ -59,7 +59,8 @@
     derivative = _alpha * _lastDerivative + (1 - _alpha) * derivative; // Apply low-pass filter
     _lastDerivative = derivative;
 
-    double output = _Kp * (error + _Ki * _integral + _Kd * derivative); // Calculate parallel PID output
+    // double output = _Kp * (error + _Ki * _integral + _Kd * derivative); // Calculate pseudo-parallel PID output
+    double output = _Kp * error + _Ki * _integral + _Kd * derivative; // Calculate true parallel PID output
     _previousError = error;
 
     return output;
