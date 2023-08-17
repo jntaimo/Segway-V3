@@ -7,6 +7,7 @@
 #include "pid.h"
 #include "pots.h"
 #include "util.h"
+#include "wireless.h"
 #include <UMS3.h>
 
 #define MOTOR_EN 38
@@ -33,7 +34,12 @@ UMS3 ums3;
 #define MIN_TRIM -0.5
 #define MAX_TRIM 0.5
 
-#define tau 0.03
+#define MAX_CONTROLLER_TILT 15//degrees
+#define MAX_CONTROLLER_YAW 50//degrees/sec
+#define CONTROLLER_DEADBAND 0.05 //minimum joystick value to register as a command
+
+#define MAX_TILT 20 //degrees
+#define CONTROLLER_TAU 0.2 //seconds
 
 #define PRINT_DELAY 30 // Delay between printing to serial in milliseconds
 static unsigned long lastPrintTime = 0;
@@ -83,19 +89,36 @@ void setup() {
     ums3.setLDO2Power(false);
     imuSetup();
     driveSetup();
-    potsSetup();  
+    potsSetup(); 
+    wirelessSetup();
     balancePID.setParallelTunings(balanceKp, balanceKi, balanceKd, balanceTau, -0.01, 0.01);
 }
 
 unsigned long lastLoopTime = 0;
 unsigned long loopDuration = 1;
+float desiredTiltAngle = 0; 
+float desiredCurvature = 0; 
+float desiredForwardVelocity = 0; 
 void loop() {
   loopDuration = micros() - lastLoopTime;
   lastLoopTime = micros();
-  // Desired values
-  float desiredTiltAngle = 0; 
-  float desiredCurvature = 0; 
-  float desiredForwardVelocity = 0; 
+
+  //if a new message has been received, update the desired tilt angle
+  //low pass filter the desired tilt angle to avoid a step response
+  if (freshWirelessData){
+    freshWirelessData = false;
+    //normalize x and y from -1 to 1
+    float x = mapDouble(joystick.x, 0, 1023, -1, 1);
+    float y = mapDouble(joystick.y, 0, 1023, -1, 1);
+
+    float newTiltAngle = y*MAX_CONTROLLER_TILT*PI/180.0;
+    //calculate alpha for the low pass filter based on the loop duration
+    float alpha = loopDuration/(loopDuration + CONTROLLER_TAU*1000000);
+
+    desiredTiltAngle = desiredTiltAngle*alpha + (1-alpha)*newTiltAngle;
+    desiredCurvature = x;
+    freshWirelessData = false;
+  }
 
   // Read the current angle from IMU
   imuAngles = readIMU();
@@ -131,7 +154,7 @@ void loop() {
   // float rightMotorControl = rightMotorPID.calculateParallel(rightDesiredSpeed, rightCurrentSpeed);
 
     // Set motor speeds
-    if (digitalRead(MOTOR_EN) && !isnan(balanceControl)){
+    if (digitalRead(MOTOR_EN) && !isnan(balanceControl) && currentTiltAngle*180/PI < MAX_TILT){
       drive(balanceControl, balanceControl);
     } else {
       //turn off motors if motor enable is not set
@@ -141,9 +164,9 @@ void loop() {
   // Print to serial
   
   if (millis() - lastPrintTime > PRINT_DELAY) {
-    // Serial.print("Desired tilt angle: ");
-    // Serial.print(desiredTiltAngle);
-    Serial.print(" Current tilt angle: ");
+    Serial.print("Desired tilt angle: ");
+    Serial.print(desiredTiltAngle*180.0/PI);
+    Serial.print(" Tilt angle: ");
     Serial.print(currentTiltAngle*180.0/PI);
     Serial.print(" Control Signal: ");
     Serial.print(balanceControl);
@@ -171,8 +194,5 @@ void loop() {
     // Serial.println(rightMotorControl);
     lastPrintTime = millis();
   }
-  
-  // Delay to avoid overloading the microcontroller
-  //delay(1);
   
 }

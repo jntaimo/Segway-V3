@@ -53,7 +53,7 @@ UMS3 ums3;
   // For the breakout board, you can use any 2 or 3 pins.
   // These pins will also work for the 1.8" TFT shield.
   #define TFT_CS        3
-  #define TFT_RST        -1 // Or set to -1 and connect to Arduino RESET pin
+  #define TFT_RST        41 // Or set to -1 and connect to Arduino RESET pin
   #define TFT_DC         34
 // #endif
 

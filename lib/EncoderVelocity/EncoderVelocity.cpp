@@ -32,7 +32,7 @@ float EncoderVelocity::getVelocity() {
   unsigned long checkDt = (currentTime >= _lastCheck) ? (currentTime - _lastCheck) : (currentTime + (0xFFFFFFFF - _lastCheck));
   
 
-  
+
      // Check if the encoder position has changed and changeDt is not zero
   if (currentPosition != _lastPosition && changeDt > 0) {
     // Calculate the velocity as the change in position (in radians) divided by the change in time (in seconds)
@@ -40,12 +40,10 @@ float EncoderVelocity::getVelocity() {
     // Update the last position and time
     _lastPosition = currentPosition;
     _lastChange = currentTime;
-    _moving = true;
     //if it's taken way too long to get a reading, reset the velocity to zero
     //only reset if the encoder is moving
-  } else if (changeDt > _timeout && _moving) {
-    _filteredVelocity = 5;
-    _moving = false;
+  } else if (changeDt > _timeout ) {
+    _velocity =0 ;
   }
 
   // Calculate the filtered velocity using a first-order low-pass filter

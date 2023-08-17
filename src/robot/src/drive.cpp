@@ -4,8 +4,8 @@
 //pins wired to the motor controller
 #define DIR1 39
 #define DIR2 40
-#define PWM1 41
-#define PWM2 42
+// #define PWM1 41
+// #define PWM2 42
 
 //increase frequency of pwm so it can't be heard
 #define PWM_FREQ 25000
@@ -20,9 +20,9 @@ float batteryVoltage = 12;
 void driveSetup(){
     //configure pins as outputs
     pinMode(DIR1, OUTPUT);
-    pinMode(PWM1, OUTPUT);
+    // pinMode(PWM1, OUTPUT);
     pinMode(DIR2, OUTPUT);
-    pinMode(PWM2, OUTPUT);
+    // pinMode(PWM2, OUTPUT);
 
     //configure pwm channels
     ledcSetup(L_CHANNEL, PWM_FREQ, PWM_BITS);
@@ -37,8 +37,8 @@ void driveSetup(){
     ledcWrite(R_CHANNEL, MAX_PWM/2);
 
     //force motor driver into two wire mode
-    digitalWrite(PWM1, HIGH);
-    digitalWrite(PWM2, HIGH);
+    // digitalWrite(PWM1, HIGH);
+    // digitalWrite(PWM2, HIGH);
     
 
 }

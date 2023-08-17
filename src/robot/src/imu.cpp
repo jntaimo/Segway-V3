@@ -13,7 +13,7 @@ sh2_SensorValue_t sensorValue;
 void imuSetup(void) {
 
 
-  Serial.println("Adafruit BNO08x test!");
+  Serial.println("Setting up IMU");
 
   if (!bno08x.begin_SPI(BNO08X_CS, BNO08X_INT)) {
     Serial.println("Failed to find BNO08x chip");
@@ -28,7 +28,7 @@ void imuSetup(void) {
 // Here is where you define the sensor outputs you want to receive
 void setReports(void) {
   Serial.println("Setting desired reports");
-  if (! bno08x.enableReport(SH2_GAME_ROTATION_VECTOR)) {
+  if (! bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 50)) {
     Serial.println("Could not enable game vector");
   }
 }
@@ -52,7 +52,7 @@ EulerAngles readIMU() {
     switch (sensorValue.sensorId) {
         //if reading succeeds
         case SH2_GAME_ROTATION_VECTOR:
-        //store new reading ina quaternion
+        //store new reading in a quaternion
             Quaternion quatReading;
             quatReading.w = sensorValue.un.gameRotationVector.real;
             quatReading.x = sensorValue.un.gameRotationVector.i;
