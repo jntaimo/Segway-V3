@@ -23,23 +23,23 @@ UMS3 ums3;
 #define WHEEL_RADIUS 0.06 // Wheel radius in meters
 
 #define MIN_KP 0.0
-#define MAX_KP 100.0
+#define MAX_KP 80.0
 
 #define MIN_KI 0.0
 #define MAX_KI 1000.0
 
 #define MIN_KD 0.0
-#define MAX_KD 100.0
+#define MAX_KD 50.0
 
-#define MIN_TRIM -0.5
-#define MAX_TRIM 0.5
+#define MIN_TRIM -0.3
+#define MAX_TRIM 0.3
 
-#define MAX_CONTROLLER_TILT 15//degrees
+#define MAX_CONTROLLER_TILT 10//degrees
 #define MAX_CONTROLLER_YAW 50//degrees/sec
-#define CONTROLLER_DEADBAND 0.05 //minimum joystick value to register as a command
+#define CONTROLLER_DEADBAND 0.03 //minimum joystick value to register as a command
 
 #define MAX_TILT 20 //degrees
-#define CONTROLLER_TAU 0.2 //seconds
+#define CONTROLLER_TAU 0.3 //seconds
 
 #define PRINT_DELAY 30 // Delay between printing to serial in milliseconds
 static unsigned long lastPrintTime = 0;
@@ -64,7 +64,7 @@ EncoderVelocity leftEncoder(LEFT_ENCODER_A_PIN, LEFT_ENCODER_B_PIN, COUNTS_PER_R
 EncoderVelocity rightEncoder(RIGHT_ENCODER_A_PIN, RIGHT_ENCODER_B_PIN, COUNTS_PER_REVOLUTION);
 
 EulerAngles imuAngles; // IMU angles
-
+EulerAngles imuGyro; // IMU angles from gyro
 
 //updates the PID parameters based on the potentiometer readings
 //returns true if the PID parameters have changed
@@ -105,28 +105,43 @@ void loop() {
 
   //if a new message has been received, update the desired tilt angle
   //low pass filter the desired tilt angle to avoid a step response
-  if (freshWirelessData){
+  if (true){
     freshWirelessData = false;
     //normalize x and y from -1 to 1
     float x = mapDouble(joystick.x, 0, 1023, -1, 1);
     float y = mapDouble(joystick.y, 0, 1023, -1, 1);
+    //deadband
+    if (abs(x) < CONTROLLER_DEADBAND){
+      x = 0;
+    }
+    if (abs(y) < CONTROLLER_DEADBAND){
+      y = 0;
+    }
 
     float newTiltAngle = y*MAX_CONTROLLER_TILT*PI/180.0;
     //calculate alpha for the low pass filter based on the loop duration
     float alpha = loopDuration/(loopDuration + CONTROLLER_TAU*1000000);
 
     desiredTiltAngle = desiredTiltAngle*alpha + (1-alpha)*newTiltAngle;
-    desiredCurvature = x;
+    desiredCurvature = desiredCurvature*alpha + (1-alpha)*(x/4);
     freshWirelessData = false;
   }
 
   // Read the current angle from IMU
-  imuAngles = readIMU();
+  EulerAngles newIMUAngles = readIMU();
+
   //only update PID if the IMU was read successfully
-  if (!imuAngles.success){
+  if (!newIMUAngles.success){
     //if the IMU was not read successfully, print an error message and return
     Serial.println("IMU read failed");
     return;
+  }
+  //got an angle reading from the IMU
+  if (!newIMUAngles.gyro){
+    imuAngles = newIMUAngles;
+  } else {
+    //if the reading was from the gyro
+    imuGyro = newIMUAngles;
   }
 
   //update the PID parameters
@@ -139,7 +154,7 @@ void loop() {
   float currentTiltAngle = imuAngles.roll;
 
   // Balancing control
-  float balanceControl = balancePID.calculateParallel(desiredTiltAngle + balanceTrim, currentTiltAngle);
+  float balanceControl = balancePID.calculateParallel(desiredTiltAngle + balanceTrim, currentTiltAngle, imuGyro.roll);
 
   // // Desired wheel speeds combining balance control, forward velocity, and curvature
   // float leftDesiredSpeed = desiredForwardVelocity - WHEEL_SEPARATION * desiredCurvature * desiredForwardVelocity / 2 - balanceControl;
@@ -154,8 +169,8 @@ void loop() {
   // float rightMotorControl = rightMotorPID.calculateParallel(rightDesiredSpeed, rightCurrentSpeed);
 
     // Set motor speeds
-    if (digitalRead(MOTOR_EN) && !isnan(balanceControl) && currentTiltAngle*180/PI < MAX_TILT){
-      drive(balanceControl, balanceControl);
+    if (digitalRead(MOTOR_EN) && !isnan(balanceControl) && abs(currentTiltAngle*180/PI) < MAX_TILT){
+      drive(balanceControl + desiredCurvature, balanceControl - desiredCurvature);
     } else {
       //turn off motors if motor enable is not set
       drive(0,0);

@@ -31,9 +31,6 @@ void setReports(void) {
   if (! bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 50)) {
     Serial.println("Could not enable game vector");
   }
-  if (!bno08x.enableReport(SH2_GYROSCOPE_CALIBRATED, 50)) {
-    Serial.println("Could not enable gyroscope");
-  }
 }
 
 //returns the current euler angles in radians
@@ -64,15 +61,6 @@ EulerAngles readIMU() {
 
             //convert it to an euler angle and return it
             return ToEulerAngles(quatReading);
-        case SH2_GYROSCOPE_CALIBRATED:
-          EulerAngles gyroReading;
-          gyroReading.roll = sensorValue.un.gyroscope.x;
-          gyroReading.pitch = sensorValue.un.gyroscope.y;
-          gyroReading.yaw = sensorValue.un.gyroscope.z;
-          gyroReading.success = true;
-          gyroReading.gyro = true;
-          return gyroReading;
-        break;
     }
 
     //catch all
@@ -105,7 +93,6 @@ EulerAngles ToEulerAngles(Quaternion q) {
     angles.yaw = std::atan2(siny_cosp, cosy_cosp);
 
     angles.success = true;
-    angles.gyro = false;
     return angles;
 }
 

@@ -59,8 +59,11 @@ void setup(void) {
 // Here is where you define the sensor outputs you want to receive
 void setReports(void) {
   Serial.println("Setting desired reports");
-  if (! bno08x.enableReport(SH2_GAME_ROTATION_VECTOR)) {
+  if (! bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 50)) {
     Serial.println("Could not enable game vector");
+  }
+  if (!bno08x.enableReport(SH2_GYROSCOPE_CALIBRATED, 50)) {
+    Serial.println("Could not enable gyroscope");
   }
 }
 
@@ -90,8 +93,17 @@ void loop() {
       Serial.print(" j: ");
       Serial.print(sensorValue.un.gameRotationVector.j);
       Serial.print(" k: ");
-      Serial.println(sensorValue.un.gameRotationVector.k);
+      Serial.print(sensorValue.un.gameRotationVector.k);
       break;
+    case SH2_GYROSCOPE_CALIBRATED:
+      Serial.print(" Gyro - x: ");
+      Serial.print(sensorValue.un.gyroscope.x);
+      Serial.print(" y: ");
+      Serial.print(sensorValue.un.gyroscope.y);
+      Serial.print(" z: ");
+      Serial.println(sensorValue.un.gyroscope.z);
+    break;
   }
+
 
 }

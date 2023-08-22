@@ -7,6 +7,7 @@ struct Quaternion {
 struct EulerAngles {
     double roll, pitch, yaw;
     bool success;
+    bool gyro;
 };
 
 void imuSetup(void);
