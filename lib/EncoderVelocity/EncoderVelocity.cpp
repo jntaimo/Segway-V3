@@ -43,7 +43,7 @@ float EncoderVelocity::getVelocity() {
     //if it's taken way too long to get a reading, reset the velocity to zero
     //only reset if the encoder is moving
   } else if (changeDt > _timeout ) {
-    _velocity =0 ;
+    _velocity = 0 ;
   }
 
   // Calculate the filtered velocity using a first-order low-pass filter

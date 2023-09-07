@@ -169,7 +169,7 @@ void loop() {
   // float rightMotorControl = rightMotorPID.calculateParallel(rightDesiredSpeed, rightCurrentSpeed);
 
     // Set motor speeds
-    if (digitalRead(MOTOR_EN) && !isnan(balanceControl) && abs(currentTiltAngle*180/PI) < MAX_TILT){
+    if (digitalRead(MOTOR_EN) && !isnan(balanceControl) && abs((currentTiltAngle + balanceTrim)*180/PI) < MAX_TILT){
       drive(balanceControl + desiredCurvature, balanceControl - desiredCurvature);
     } else {
       //turn off motors if motor enable is not set
@@ -193,7 +193,9 @@ void loop() {
     Serial.print(balanceKi);
     Serial.print(" Kd: ");
     Serial.print(balanceKd);
-    Serial.print("Loop Time: ");
+    Serial.print(" Trim: ");
+    Serial.print(balanceTrim);
+    Serial.print(" Loop Time: ");
     Serial.println(loopDuration);
     // Serial.print(" Left desired speed: ");
     // Serial.print(leftDesiredSpeed);

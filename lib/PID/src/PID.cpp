@@ -81,6 +81,7 @@
     //_lastDerivative = derivative;
 
     // double output = _Kp * (error + _Ki * _integral + _Kd * derivative); // Calculate pseudo-parallel PID output
+    
     double output = _Kp * error + _Ki * _integral + _Kd * derivative; // Calculate true parallel PID output
     _previousError = error;
 
