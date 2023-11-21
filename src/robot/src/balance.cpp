@@ -8,40 +8,13 @@
 #include "pots.h"
 #include "util.h"
 #include "wireless.h"
+#include "balance.h"
 #include <UMS3.h>
 
-#define MOTOR_EN 38
+
 UMS3 ums3;
 // Pin definitions and counts per revolution
-#define LEFT_ENCODER_A_PIN 10
-#define LEFT_ENCODER_B_PIN 11
-#define RIGHT_ENCODER_A_PIN 13
-#define RIGHT_ENCODER_B_PIN 14
-#define COUNTS_PER_REVOLUTION 103.8
 
-#define WHEEL_SEPARATION 0.4 // Wheel separation in meters
-#define WHEEL_RADIUS 0.06 // Wheel radius in meters
-
-#define MIN_KP 0.0
-#define MAX_KP 80.0
-
-#define MIN_KI 0.0
-#define MAX_KI 1000.0
-
-#define MIN_KD 0.0
-#define MAX_KD 50.0
-
-#define MIN_TRIM -0.3
-#define MAX_TRIM 0.3
-
-#define MAX_CONTROLLER_TILT 10//degrees
-#define MAX_CONTROLLER_YAW 50//degrees/sec
-#define CONTROLLER_DEADBAND 0.03 //minimum joystick value to register as a command
-
-#define MAX_TILT 20 //degrees
-#define CONTROLLER_TAU 0.3 //seconds
-
-#define PRINT_DELAY 30 // Delay between printing to serial in milliseconds
 static unsigned long lastPrintTime = 0;
 
 double balanceKp = 10.0; 
@@ -53,6 +26,10 @@ double balanceTau = 0.05;
 double motorKp = 1.0;
 double motorKi = 0.1;
 double motorKd = 0.0;
+
+double observerKp = 1.0;
+double observerKi = 0.1;
+double observerKd = 0.0;
 
 // PID controllers
 PID balancePID(balanceKp, balanceKi, balanceKd, 0, balanceTau, false);  
@@ -91,14 +68,20 @@ void setup() {
     driveSetup();
     potsSetup(); 
     wirelessSetup();
+    // displaySetup();
     balancePID.setParallelTunings(balanceKp, balanceKi, balanceKd, balanceTau, -0.01, 0.01);
 }
 
 unsigned long lastLoopTime = 0;
 unsigned long loopDuration = 1;
+
 float desiredTiltAngle = 0; 
 float desiredCurvature = 0; 
 float desiredForwardVelocity = 0; 
+
+float leftMotorAngle = 0;
+float rightMotorAngle = 0;
+
 void loop() {
   loopDuration = micros() - lastLoopTime;
   lastLoopTime = micros();
@@ -148,6 +131,7 @@ void loop() {
   bool paramsChanged = updatePIDParams(balanceKp, balanceKi, balanceKd, balanceTrim);
   if (paramsChanged) {
     balancePID.setParallelTunings(balanceKp, balanceKi, balanceKd);
+    // updateDisplay(balanceKp, balanceKi, balanceKd, balanceTrim);
   }
   
   //IMU must have been read successfully
@@ -167,13 +151,15 @@ void loop() {
   // // Calculate motor control signals using PID controllers
   // float leftMotorControl = leftMotorPID.calculateParallel(leftDesiredSpeed, leftCurrentSpeed);
   // float rightMotorControl = rightMotorPID.calculateParallel(rightDesiredSpeed, rightCurrentSpeed);
+  // leftMotorAngle = leftEncoder.getPosition();
+  // rightMotorAngle = rightEncoder.getPosition();
 
     // Set motor speeds
-    if (digitalRead(MOTOR_EN) && !isnan(balanceControl) && abs((currentTiltAngle + balanceTrim)*180/PI) < MAX_TILT){
-      drive(balanceControl + desiredCurvature, balanceControl - desiredCurvature);
-    } else {
-      //turn off motors if motor enable is not set
-      drive(0,0);
+  if (digitalRead(MOTOR_EN) && !isnan(balanceControl) && abs((currentTiltAngle + balanceTrim)*180/PI) < MAX_TILT){
+    drive(balanceControl + desiredCurvature, balanceControl - desiredCurvature);
+  } else {
+    //turn off motors if motor enable is not set
+    drive(0,0);
   }
   
   // Print to serial
@@ -194,9 +180,16 @@ void loop() {
     Serial.print(" Kd: ");
     Serial.print(balanceKd);
     Serial.print(" Trim: ");
-    Serial.print(balanceTrim);
-    Serial.print(" Loop Time: ");
-    Serial.println(loopDuration);
+    Serial.println(balanceTrim);
+    // Serial.print("L Angle: ");
+    // Serial.print(int(leftMotorAngle*180.0/PI));
+    // Serial.print("° R Angle: ");
+    // Serial.print(int(rightMotorAngle*180.0/PI));
+    // Serial.println("°");
+    // Serial.print(" Loop Time: ");
+    // Serial.println(loopDuration);
+
+
     // Serial.print(" Left desired speed: ");
     // Serial.print(leftDesiredSpeed);
     // Serial.print(" Right desired speed: ");
