@@ -1,9 +1,10 @@
 #include "FIRFilter.h"
 #include <cstring> // For std::fill_n
-#include <algorithm> //for std::fill_n
-
-FIRFilter::FIRFilter(int size) {
+#include <algorithm> // For std::fill_n
+// Constructor
+FIRFilter::FIRFilter(unsigned int size) {
     bufferSize = size;
+    bufferShift = getShiftAmount(bufferSize);
     gyroBuffer = new float[bufferSize];
     bufferIndex = 0;
     runningSum = 0.0;
@@ -11,41 +12,39 @@ FIRFilter::FIRFilter(int size) {
     initializeBuffer();
 }
 
+// Destructor
 FIRFilter::~FIRFilter() {
     delete[] gyroBuffer;
 }
 
+// Initializes the buffer with zeros
 void FIRFilter::initializeBuffer() {
-    std::fill_n(gyroBuffer, bufferSize, 0.0f); // Fill the buffer with zeros
+    std::fill_n(gyroBuffer, bufferSize, 0.0f);
 }
 
 float FIRFilter::update(float newReading) {
-    // Update running sum: subtract the oldest value and add the new one
+    // Remove the oldest value and add the new value to the running sum
     runningSum -= gyroBuffer[bufferIndex];
     runningSum += newReading;
 
-    // Store the new reading in the buffer
+    // Update the buffer with the new reading
     gyroBuffer[bufferIndex] = newReading;
-    bufferIndex = (bufferIndex + 1) % bufferSize; // Circular buffer index
+    bufferIndex = (bufferIndex + 1) % bufferSize;
 
-    // Calculate average: if buffer isn't full, use count; otherwise, use bufferSize
+    // Compute the average
     if (count < bufferSize) {
         count++;
         return runningSum / count;
     }
-
-    return runningSum / bufferSize;
+    return runningSum / bufferSize; // Division is efficient for power of 2 sizes
 }
 
-void FIRFilter::setSize(int newSize) {
-    // Only proceed if the new size is different from the current size
-    if (newSize != bufferSize) {
-        delete[] gyroBuffer; // Free the existing buffer
-        bufferSize = newSize; // Update the size
-        gyroBuffer = new float[bufferSize]; // Allocate a new buffer
-        bufferIndex = 0; // Reset index
-        runningSum = 0.0; // Reset running sum
-        count = 0; // Reset count
-        initializeBuffer(); // Initialize the new buffer
+// Calculates the amount to shift for efficient division based on buffer size
+unsigned int FIRFilter::getShiftAmount(unsigned int value) {
+    unsigned int shiftAmount = 0;
+    while (value > 1) {
+        value >>= 1;
+        shiftAmount++;
     }
+    return shiftAmount;
 }

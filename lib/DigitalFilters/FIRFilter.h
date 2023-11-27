@@ -3,27 +3,42 @@
 
 class FIRFilter {
 public:
-    // Constructor: Initializes the FIR filter with a specified size
-    FIRFilter(int size);
+    /**
+     * Constructor for FIRFilter.
+     * Initializes a FIR filter with a buffer of the specified size.
+     * 
+     * @param size The size of the buffer for the FIR filter. 
+     *             This size must be a power of 2.
+     */
+    FIRFilter(unsigned int size);
 
-    // Destructor: Cleans up dynamically allocated memory
+    /**
+     * Destructor for FIRFilter.
+     * Cleans up dynamically allocated memory.
+     */
     ~FIRFilter();
 
-    // Updates the filter with a new reading and returns the filtered value
+    /**
+     * Updates the filter with a new reading and returns the filtered value.
+     * 
+     * @param newReading The new data point to add to the filter.
+     * @return The filtered output value.
+     */
     float update(float newReading);
 
-    // Sets a new size for the filter and reinitializes it
-    void setSize(int newSize);
-
 private:
-    // Helper function to initialize the buffer with zeros
+    // Initializes the buffer with zeros
     void initializeBuffer();
 
-    float *gyroBuffer;  // Dynamic array to hold the gyro readings
-    int bufferSize;     // Size of the buffer
-    int bufferIndex;    // Current index in the buffer for the next reading
-    float runningSum;   // Running sum of the last 'n' readings
-    int count;          // Count of readings added, used during initial fill
+    // Calculates the amount to shift for efficient division, based on buffer size
+    unsigned int getShiftAmount(unsigned int value);
+
+    float *gyroBuffer;         // Dynamic array to hold the gyro readings
+    unsigned int bufferSize;   // Size of the buffer, must be a power of 2
+    unsigned int bufferShift;  // Amount to shift for division (log2 of bufferSize)
+    unsigned int bufferIndex;  // Current index in the buffer for the next reading
+    float runningSum;          // Running sum of the last 'n' readings
+    unsigned int count;        // Count of readings added, used during initial fill
 };
 
 #endif // FIRFILTER_H
