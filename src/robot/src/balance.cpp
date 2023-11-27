@@ -9,6 +9,7 @@
 #include "util.h"
 #include "wireless.h"
 #include "balance.h"
+#include "pinout.h"
 #include <UMS3.h>
 
 
@@ -60,7 +61,6 @@ bool updatePIDParams(double &kp, double &ki, double &kd, double &trim){
 
 void setup() {
   // Setup code here, such as initializing serial communication or motor drivers
-    pinMode(MOTOR_EN, INPUT_PULLUP);
     Serial.begin(115200);
     ums3.begin();
     ums3.setLDO2Power(false);
@@ -155,7 +155,7 @@ void loop() {
   // rightMotorAngle = rightEncoder.getPosition();
 
     // Set motor speeds
-  if (digitalRead(MOTOR_EN) && !isnan(balanceControl) && abs((currentTiltAngle + balanceTrim)*180/PI) < MAX_TILT){
+  if (!isnan(balanceControl) && abs((currentTiltAngle + balanceTrim)*180/PI) < MAX_TILT){
     drive(balanceControl + desiredCurvature, balanceControl - desiredCurvature);
   } else {
     //turn off motors if motor enable is not set

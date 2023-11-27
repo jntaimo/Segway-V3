@@ -4,10 +4,7 @@
 #include <SPI.h>
 #include "RectangularGauge.h"
 #include "balance.h"
-
-#define TFT_CS     3
-#define TFT_RST    41
-#define TFT_DC     34
+#include "pinout.h"
 
 unsigned long lastTime = 0;
 //only update the display every minMillis milliseconds

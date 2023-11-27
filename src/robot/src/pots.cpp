@@ -1,10 +1,6 @@
 #include <Arduino.h>
 #include "pots.h"
-
-#define POT_1_PIN 1
-#define POT_2_PIN 2
-#define POT_3_PIN 4
-#define POT_4_PIN 5
+#include "pinout.h"
 
 #define NUM_POTS 4
 #define POT_THRESHOLD 3

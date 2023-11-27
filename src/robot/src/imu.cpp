@@ -1,13 +1,10 @@
 #include <Arduino.h>
 #include <Adafruit_BNO08x.h>
 #include "imu.h"
-
+#include "pinout.h"
 //SPI setup
-#define BNO08X_CS 12
-#define BNO08X_INT 13
-#define BNO08X_RESET 14
 
-Adafruit_BNO08x  bno08x(BNO08X_RESET);
+Adafruit_BNO08x  bno08x(IMU_RST);
 sh2_SensorValue_t sensorValue;
 
 void imuSetup(void) {
@@ -15,7 +12,7 @@ void imuSetup(void) {
 
   Serial.println("Setting up IMU");
 
-  if (!bno08x.begin_SPI(BNO08X_CS, BNO08X_INT)) {
+  if (!bno08x.begin_SPI(IMU_CS, IMU_INT)) {
     Serial.println("Failed to find BNO08x chip");
     while (1) { delay(10); }
   } 
