@@ -1,14 +1,14 @@
 #include <Arduino.h>
 #include "pinout.h"
-
+#include "drive.h"
 
 //increase frequency of pwm so it can't be heard
 #define PWM_FREQ 25000
 //max number of bits for pwm
-#define PWM_BITS 11
+#define PWM_BITS 10
 #define MAX_PWM (pow(2, PWM_BITS)-1)
-#define PWM1_CHANNEL 0
-#define PWM2_CHANNEL 1
+#define L_CHANNEL 0
+#define R_CHANNEL 1
 
 float batteryVoltage = 12;
 
@@ -20,12 +20,12 @@ void driveSetup(){
     pinMode(PWM2, OUTPUT);
 
     //configure pwm channels
-    ledcSetup(PWM1_CHANNEL, PWM_FREQ, PWM_BITS);
-    ledcSetup(PWM2_CHANNEL, PWM_FREQ, PWM_BITS);
+    ledcSetup(L_CHANNEL, PWM_FREQ, PWM_BITS);
+    ledcSetup(R_CHANNEL, PWM_FREQ, PWM_BITS);
 
     //assign pwm pins to channels
-    ledcAttachPin(PWM1_CHANNEL, 0);
-    ledcAttachPin(PWM2_CHANNEL, 1);
+    ledcAttachPin(PWM1, L_CHANNEL);
+    ledcAttachPin(PWM2, R_CHANNEL);
 }
 
 //drives the motors with units in volts
@@ -44,6 +44,6 @@ void drive(double left, double right){
     digitalWrite(DIR2, right > 0);
 
     //output pwm
-    ledcWrite(PWM1_CHANNEL, abs(left)*MAX_PWM);
-    ledcWrite(PWM2_CHANNEL, abs(right)*MAX_PWM);
+    ledcWrite(L_CHANNEL, abs(left)*MAX_PWM);
+    ledcWrite(R_CHANNEL, abs(right)*MAX_PWM);
 }

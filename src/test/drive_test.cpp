@@ -1,12 +1,6 @@
 #include <Arduino.h>
 #include "drive.h"
-
-//pins wired to the motor controller
-#define DIR1 39
-#define DIR2 40
-// #define PWM1 41
-// #define PWM2 42
-
+#include "pinout.h"
 //increase frequency of pwm so it can't be heard
 #define PWM_FREQ 25000
 //max number of bits for pwm
@@ -20,27 +14,18 @@ float batteryVoltage = 12;
 void driveSetup(){
     //configure pins as outputs
     pinMode(DIR1, OUTPUT);
-    // pinMode(PWM1, OUTPUT);
+    pinMode(PWM1, OUTPUT);
     pinMode(DIR2, OUTPUT);
-    // pinMode(PWM2, OUTPUT);
+    pinMode(PWM2, OUTPUT);
 
     //configure pwm channels
     ledcSetup(L_CHANNEL, PWM_FREQ, PWM_BITS);
     ledcSetup(R_CHANNEL, PWM_FREQ, PWM_BITS);
 
-    //assign pwm pins to channels
-    ledcAttachPin(DIR1, 0);
-    ledcAttachPin(DIR2, 1);
+    // //assign pwm pins to channels
+    ledcAttachPin(PWM1, L_CHANNEL);
+    ledcAttachPin(PWM2, R_CHANNEL); 
     
-    //put pwm at middle value to turn off motors
-    ledcWrite(L_CHANNEL, MAX_PWM/2);
-    ledcWrite(R_CHANNEL, MAX_PWM/2);
-
-    //force motor driver into two wire mode
-    // digitalWrite(PWM1, HIGH);
-    // digitalWrite(PWM2, HIGH);
-    
-
 }
 
 //drives the motors with units in volts
@@ -54,24 +39,31 @@ void drive(double left, double right){
     //limit drive pwm 
     left = constrain(left, -1, 1);
     right = constrain(right, -1, 1);
+    //pick direction
+    digitalWrite(DIR1, left > 0);
+    digitalWrite(DIR2, right > 0);
 
     //output pwm
-    //centered around half of max pwm
-    ledcWrite(L_CHANNEL, left*MAX_PWM/2 + MAX_PWM/2);
-    ledcWrite(R_CHANNEL, right*MAX_PWM/2 + MAX_PWM/2);
+    ledcWrite(L_CHANNEL, abs(left)*MAX_PWM);
+    ledcWrite(R_CHANNEL, abs(right)*MAX_PWM);
 }
 
 void setup(){
     driveSetup();
+    Serial.begin(115200);
 }
 
 void loop(){
+    Serial.println("Forward");
     drive(1, 1);
-    delay(2000);
+    delay(500);
+    Serial.println("Stop");
     drive(0,0);
-    delay(2000);
+    delay(500);
+    Serial.println("Backward");
     drive(-1, -1);
-    delay(2000);
+    delay(500);
+    Serial.println("Stop");
     drive(0,0);
-    delay(2000);
+    delay(500);
 }
