@@ -77,9 +77,6 @@
     _integral += error * dt;                        // Integral term
     _integral = constrain(_integral, _integralMin, _integralMax); // Prevent integral windup
 
-    //derivative = _alpha * _lastDerivative + (1 - _alpha) * derivative; // Apply low-pass filter
-    //_lastDerivative = derivative;
-
     // double output = _Kp * (error + _Ki * _integral + _Kd * derivative); // Calculate pseudo-parallel PID output
     
     double output = _Kp * error + _Ki * _integral + _Kd * derivative; // Calculate true parallel PID output
@@ -111,6 +108,23 @@
     return output;
   }
 
+  // Serial form PID calculation
+  double PID::calculateSerial(double input, double setpoint, double derivative) {
+    _setpoint = setpoint;
+    unsigned long currentTime = micros();
+    unsigned long timeDifference = handleMicrosRollover(currentTime);
+    double dt = (double)timeDifference / 1000000.0; // Time difference in seconds
+    _alpha = exp(-dt / _tau); // Calculate alpha for low-pass filter
+
+    double error = _setpoint - input;               // Calculate error
+    _integral += (1.0 / _Ki) * error * dt;          // Integral term
+    _integral = constrain(_integral, _integralMin, _integralMax); // Prevent integral windup
+    
+    double output = _Kp * (error + _integral) * _Kd * derivative; // Calculate serial PID output
+    _previousError = _integral + error;
+
+    return output;
+  }
 
   // Method to handle micros() rollover
   unsigned long PID::handleMicrosRollover(unsigned long currentTime) {

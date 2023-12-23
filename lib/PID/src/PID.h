@@ -88,6 +88,16 @@ public:
    */
   double calculateSerial(double input, double setpoint);
 
+  /**
+   * Calculates the output of the serial PID controller based on the input and setpoint.
+   *
+   * @param input The current process variable.
+   * @param setpoint The desired target value for the control system.
+   * @param derivative External derivative value to be used in the PID calculation.
+   * @return Output of the PID controller.
+   */
+  double calculateSerial(double input, double setpoint, double derivative);
+
 private:
   /**
    * Helper function to handle the overflow of micros() in Arduino.
