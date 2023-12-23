@@ -1,5 +1,7 @@
 #ifndef IMU_H
 #define IMU_H
+
+#include "FIRFilter.h"
 struct Quaternion {
     double w, x, y, z;
 };
