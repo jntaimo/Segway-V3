@@ -100,7 +100,9 @@ void loop() {
     if (abs(y) < CONTROLLER_DEADBAND){
       y = 0;
     }
+    //TODO Try FIR filter to maintin responsiveness
 
+    //convert the joystick x and y to tilt angle and curvature
     float newTiltAngle = y*MAX_CONTROLLER_TILT*PI/180.0;
     //calculate alpha for the low pass filter based on the loop duration
     float alpha = loopDuration/(loopDuration + CONTROLLER_TAU*1000000);

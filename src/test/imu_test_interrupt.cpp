@@ -2,10 +2,15 @@
 #include <Adafruit_BNO08x.h>
 #include "imu.h"
 #include "pinout.h"
+#include "EveryNMillis.h"
 //SPI setup
 
 Adafruit_BNO08x  bno08x(IMU_RST);
 sh2_SensorValue_t sensorValue;
+
+void imuISR() {
+  imuDataReady = true;
+}
 
 void imuSetup(void) {
 
@@ -20,6 +25,8 @@ void imuSetup(void) {
   Serial.println("BNO08x Found!");
 
   setReports();
+  pinMode(IMU_INT, INPUT);
+  attachInterrupt(digitalPinToInterrupt(IMU_INT), imuISR, RISING);
 }
 
 // Here is where you define the sensor outputs you want to receive
@@ -113,4 +120,25 @@ void printEuler(EulerAngles angles){
     if (angles.success){
         Serial.printf("Roll: %.2f Pitch: %.2f Yaw: %.2f\n", angles.roll, angles.pitch, angles.yaw);    
     }  
+}
+
+void setup(){
+  imuSetup();
+}
+
+//length of time between serial prints
+unsigned long printInterval = 1000; //ms
+void loop(){
+  
+  if (imuDataReady) {
+    imuDataReady = false;
+    EulerAngles angles = readIMU();
+    printEuler(angles);
+
+    EVERY_N_MILLIS(printInterval) {
+     printEuler(angles);
+    }
+  }
+
+
 }

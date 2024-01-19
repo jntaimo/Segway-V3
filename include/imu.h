@@ -14,6 +14,8 @@ struct EulerAngles {
 
 void imuSetup(void);
 EulerAngles readIMU();
+void imuISR();
+volatile bool imuDataReady = false;
 
 void setReports(void);
 void printEuler(EulerAngles angles);

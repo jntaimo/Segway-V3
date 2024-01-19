@@ -1,10 +1,13 @@
 #include <Arduino.h>
 #include <Adafruit_BNO08x.h>
 #include "imu.h"
-#include "pinout.h"
-//SPI setup
 
-Adafruit_BNO08x  bno08x(IMU_RST);
+//SPI setup
+#define BNO08X_CS 12
+#define BNO08X_INT 13
+#define BNO08X_RESET 14
+
+Adafruit_BNO08x  bno08x(BNO08X_RESET);
 sh2_SensorValue_t sensorValue;
 
 void imuSetup(void) {
@@ -12,7 +15,7 @@ void imuSetup(void) {
 
   Serial.println("Setting up IMU");
 
-  if (!bno08x.begin_SPI(IMU_CS, IMU_INT)) {
+  if (!bno08x.begin_SPI(BNO08X_CS, BNO08X_INT)) {
     Serial.println("Failed to find BNO08x chip");
     while (1) { delay(10); }
   } 
@@ -25,11 +28,8 @@ void imuSetup(void) {
 // Here is where you define the sensor outputs you want to receive
 void setReports(void) {
   Serial.println("Setting desired reports");
-  if (! bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 2500)) {
+  if (! bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 50)) {
     Serial.println("Could not enable game vector");
-  }
-  if (!bno08x.enableReport(SH2_GYROSCOPE_CALIBRATED, 1500)) {
-    Serial.println("Could not enable gyroscope");
   }
 }
 
@@ -61,15 +61,6 @@ EulerAngles readIMU() {
 
             //convert it to an euler angle and return it
             return ToEulerAngles(quatReading);
-        case SH2_GYROSCOPE_CALIBRATED:
-          EulerAngles gyroReading;
-          gyroReading.roll = sensorValue.un.gyroscope.x;
-          gyroReading.pitch = sensorValue.un.gyroscope.y;
-          gyroReading.yaw = sensorValue.un.gyroscope.z;
-          gyroReading.success = true;
-          gyroReading.gyro = true;
-          return gyroReading;
-        break;
     }
 
     //catch all
@@ -102,7 +93,6 @@ EulerAngles ToEulerAngles(Quaternion q) {
     angles.yaw = std::atan2(siny_cosp, cosy_cosp);
 
     angles.success = true;
-    angles.gyro = false;
     return angles;
 }
 

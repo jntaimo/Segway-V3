@@ -2,10 +2,15 @@
 #include <Adafruit_BNO08x.h>
 #include "imu.h"
 #include "pinout.h"
+#include "EveryNMillis.h"
 //SPI setup
 
 Adafruit_BNO08x  bno08x(IMU_RST);
 sh2_SensorValue_t sensorValue;
+
+void imuISR() {
+  imuDataReady = true;
+}
 
 void imuSetup(void) {
 
@@ -20,15 +25,17 @@ void imuSetup(void) {
   Serial.println("BNO08x Found!");
 
   setReports();
+  pinMode(IMU_INT, INPUT);
+  attachInterrupt(digitalPinToInterrupt(IMU_INT), imuISR, RISING);
 }
 
 // Here is where you define the sensor outputs you want to receive
 void setReports(void) {
   Serial.println("Setting desired reports");
-  if (! bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 2500)) {
-    Serial.println("Could not enable game vector");
-  }
-  if (!bno08x.enableReport(SH2_GYROSCOPE_CALIBRATED, 1500)) {
+  // if (! bno08x.enableReport(SH2_GAME_ROTATION_VECTOR, 1000)) {
+  //   Serial.println("Could not enable game vector");
+  // }
+  if (!bno08x.enableReport(SH2_GYROSCOPE_CALIBRATED, 1000)) {
     Serial.println("Could not enable gyroscope");
   }
 }
@@ -113,4 +120,31 @@ void printEuler(EulerAngles angles){
     if (angles.success){
         Serial.printf("Roll: %.2f Pitch: %.2f Yaw: %.2f\n", angles.roll, angles.pitch, angles.yaw);    
     }  
+}
+
+void setup(){
+  imuSetup();
+}
+
+//length of time between serial prints
+unsigned long printInterval = 10; //ms
+//time how long between subsequent readings
+unsigned long lastReadMicros = 0;
+unsigned long currentReadMicros = 0;
+void loop(){
+  
+  if (imuDataReady) {
+    currentReadMicros = millis();
+    unsigned long elapsedMicros = currentReadMicros - lastReadMicros;
+    imuDataReady = false;
+    EulerAngles angles = readIMU();
+
+    EVERY_N_MILLIS(printInterval) {
+    Serial.printf("Elapsed time: %lu\n", elapsedMicros);
+    //printEuler(angles);
+    }
+    lastReadMicros = currentReadMicros;
+  }
+
+
 }
